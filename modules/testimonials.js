@@ -1,0 +1,54 @@
+export function init() {
+  if (typeof Swiper === 'undefined') return
+  const el = document.querySelector('#testimonials-slider')
+  if (!el) return
+
+  const wrapper = el.querySelector('.swiper-wrapper')
+  const originals = [...wrapper.children]
+  while (wrapper.children.length < 6) {
+    originals.forEach((slide) => {
+      const clone = slide.cloneNode(true)
+      clone.setAttribute('aria-hidden', 'true')
+      wrapper.appendChild(clone)
+    })
+  }
+
+  const swiper = new Swiper(el, {
+    loop: true,
+    centeredSlides: true,
+    slidesPerView: 'auto',
+    spaceBetween: 48,
+    grabCursor: true,
+    slideToClickedSlide: true,
+    speed: 600,
+    // Swipe trackpad (deltaX) : fait glisser le slider, sans jamais intercepter
+    // le scroll vertical normal de la page (forceToAxis limite à l'axe horizontal).
+    mousewheel: { forceToAxis: true },
+    autoplay: {
+      delay: 5000,
+      disableOnInteraction: false, // reprend l'autoplay après un clic ou un drag
+      pauseOnMouseEnter: true,     // pause au survol, pratique pour lire
+    },
+    breakpoints: {
+      0: { spaceBetween: 24, autoplay: false }, // pas de défilement auto sur mobile
+      768: { spaceBetween: 48 },
+    },
+  })
+
+  // L'autoplay ne tourne que lorsque la section est visible
+  swiper.autoplay.stop()
+
+  const io = new IntersectionObserver(
+    ([entry]) => {
+      if (entry.isIntersecting) {
+        swiper.autoplay.start()
+        // Effet de lettres à l'arrivée sur la section : desktop/tablet seulement
+        if (window.innerWidth >= 768) el.dispatchEvent(new CustomEvent('slider:enter'))
+      } else {
+        swiper.autoplay.stop()
+      }
+    },
+    { threshold: 0.4 } // 40 % du slider visible
+  )
+  io.observe(el)
+}
